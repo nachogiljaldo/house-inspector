@@ -18,7 +18,7 @@ images-tag:
 	docker tag house-inspector:${IMAGE_VERSION}' ${DOCKER_REPOSITORY}/house-inspector:${IMAGE_VERSION}
 
 images-push:
-	docker push ${DOCKER_REPOSITORY}/cuponeitor-web:${IMAGE_VERSION}
+	docker push ${DOCKER_REPOSITORY}/house-inspector:${IMAGE_VERSION}
 
 start: prepare-environment
 	echo "Starting environment"
