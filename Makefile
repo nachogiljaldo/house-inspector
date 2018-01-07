@@ -20,10 +20,14 @@ images-tag:
 images-push:
 	docker push ${DOCKER_REPOSITORY}/cuponeitor-web:${IMAGE_VERSION}
 
-start:
+start: prepare-environment
 	echo "Starting environment"
 	docker-compose -f scripts/docker-compose.yml up -d
 
 stop:
 	echo "Stopping environment"
 	docker-compose -f scripts/docker-compose.yml down
+
+prepare-environment:
+	echo "Preparing execution environment"
+	mkdir -p /data/elasticsearch

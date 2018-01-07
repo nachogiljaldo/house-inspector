@@ -5,14 +5,27 @@ networks:
 
 services:
   elasticsearch:
+    container_name: "elasticsearch"
     image: docker.elastic.co/elasticsearch/elasticsearch-oss:6.1.1
     networks:
       home-inspector-network:
         aliases:
           - home-inspector.elasticsearch
+    volumes:
+      - /data/elasticsearch:/usr/share/elasticsearch/data
+    environment:
+      - cluster.name=house-inspector-cluster
+    ports:
+      - 9200:9200
   kibana:
+    container_name: "kibana"
     image: docker.elastic.co/kibana/kibana-oss:6.1.1
     networks:
       home-inspector-network:
         aliases:
           - home-inspector.kibana
+    environment:
+      SERVER_NAME: kibana.home-inspector
+      ELASTICSEARCH_URL: http://home-inspector.elasticsearch:9200
+    ports:
+      - 5601:5601
