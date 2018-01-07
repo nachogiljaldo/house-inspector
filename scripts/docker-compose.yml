@@ -29,3 +29,10 @@ services:
       ELASTICSEARCH_URL: http://home-inspector.elasticsearch:9200
     ports:
       - 5601:5601
+  crawler:
+    container_name: "crawler"
+    image: "house-inspector:0.1"
+    networks:
+      home-inspector-network:
+        aliases:
+          - home-inspector.crawler
