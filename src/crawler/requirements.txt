@@ -1,0 +1,2 @@
+pyspider==0.3.9
+configloader[all]==1.0.1

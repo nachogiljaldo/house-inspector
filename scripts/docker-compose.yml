@@ -36,3 +36,5 @@ services:
       home-inspector-network:
         aliases:
           - home-inspector.crawler
+    environment:
+      ELASTICSEARCH_URL: http://home-inspector.elasticsearch:9200
