@@ -12,13 +12,13 @@ RUN \
 WORKDIR /app
 
 # Copy requirements file
-ADD src/crawler/requirements.txt /app
+ADD crawler/requirements.txt /app
 
 RUN pip install -r requirements.txt
 
 # Copy sources of the project
-ADD src/crawler/python .
-ADD src/crawler/config config
+ADD crawler/python .
+ADD crawler/config config
 
 ENV CONFIG_FILE_PATH config/config.yml
 ENV CONFIG_LOGGING_PATH config/logging.conf
