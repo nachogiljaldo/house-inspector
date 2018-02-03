@@ -127,8 +127,8 @@ class PropertyPersister(object):
     try:
       property = property_dict['property']
       doc = property.toJSON()
-      print(doc)
       self.logger.debug("about to persist document (index, id) = [({}, {}]".format(property.id, self.index_name))
+      self.logger.debug("document to persist is [{}]".format(doc))
       result = self.es_client().index(index=self.index_name, doc_type=self.type_name, id=property.id, body=doc)
       self.logger.info("Saved with result [{}]".format(result))
     except Exception, err:

@@ -39,12 +39,18 @@ class IdealistaSpider(scrapy.Spider):
   name = provider_name
   base_query = '//*[@id="main"]//*'
   main_info = '{}/div[contains(@class, "main-info__title")]'.format(base_query)
+  url = None
+  params = None
+  base_url = 'https://www.idealista.com/venta-viviendas/'
+  pagination_pattern = 'pagina-{}.htm'
 
   def start_requests(self):
     # URL with filters: https://www.idealista.com/venta-viviendas/madrid-madrid/con-precio-hasta_300000,metros-cuadrados-mas-de_100,de-tres-dormitorios,de-cuatro-cinco-habitaciones-o-mas,dos-banos,tres-banos-o-mas/
-    params = self.search_params()
+    self.params = self.search_params()
+    first_page = self.pagination_pattern.format(1)
+    url = '{}{}{}'.format(self.base_url, self.params, first_page)
     urls = [
-      'https://www.idealista.com/venta-viviendas/{}pagina-1.htm'.format(params)
+      url
     ]
     for url in urls:
       yield scrapy.Request(url=url, callback=self.parse)
@@ -67,6 +73,9 @@ class IdealistaSpider(scrapy.Spider):
       return location + "con-" + (",".join(slugs)) + "/"
 
   def parse(self, response):
+    next_page = self.find_next_page(response)
+    if next_page:
+      yield scrapy.Request(next_page)
     logger.info("Starting to parse responses [{}]".format(response))
     links = response.xpath('//article/div[contains(@class, "item")]/*//a[contains(@class, "item-link")]/@href').extract()
     for link in links:
@@ -81,6 +90,18 @@ class IdealistaSpider(scrapy.Spider):
         print 'print_exc(1):'
         traceback.print_exc(limit=1, file=sys.stdout)
         logger.warn("Error parsing response", err)
+
+  def find_next_page(self, response):
+    print("--------------------------------------")
+    current_page = int(response.xpath('//*[@id="main-content"]/*//div[contains(@class, "pagination")]/*//li[contains(@class, "selected")]/span/text()').extract_first())
+    url = '{}{}{}'.format(self.base_url, self.params, self.pagination_pattern.format(current_page + 1))
+    # if the current page contains pagina- and is the same indicated in the footer, we go on
+    print("will check that 'pagina-' not in [{}] or [{}] in [{}]".format(response.url, self.pagination_pattern.format(current_page), response.url))
+    if "pagina-" not in response.url or self.pagination_pattern.format(current_page) in response.url:
+      print("will visit {}".format(url))
+      return url
+    else:
+      return None
 
   def parse_property(self, response):
     try:
