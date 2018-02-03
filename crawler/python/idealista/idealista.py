@@ -26,7 +26,8 @@ class IdealistaFetcher(PropertyFetcher):
       'AUTOTHROTTLE_ENABLED': True,
       'CONCURRENT_REQUESTS_PER_DOMAIN': 1,
       'DOWNLOAD_DELAY': 1,
-      'PERSISTER': self.persister
+      'PERSISTER': self.persister,
+      'SEARCH': search
     })
 
     process.crawl(IdealistaSpider)
@@ -41,11 +42,29 @@ class IdealistaSpider(scrapy.Spider):
 
   def start_requests(self):
     # URL with filters: https://www.idealista.com/venta-viviendas/madrid-madrid/con-precio-hasta_300000,metros-cuadrados-mas-de_100,de-tres-dormitorios,de-cuatro-cinco-habitaciones-o-mas,dos-banos,tres-banos-o-mas/
+    params = self.search_params()
     urls = [
-      'https://www.idealista.com/venta-viviendas/madrid-madrid/pagina-1.htm'
+      'https://www.idealista.com/venta-viviendas/{}pagina-1.htm'.format(params)
     ]
     for url in urls:
       yield scrapy.Request(url=url, callback=self.parse)
+
+  def search_params(self):
+    search = self.settings['SEARCH']
+    location = search.name + "/"
+    slugs = []
+    if search.max_price:
+      slugs.append("precio-hasta_{}".format(search.max_price))
+    if search.min_price:
+      slugs.append("precio-desde_{}".format(search.min_price))
+    if search.min_size:
+      slugs.append("metros-cuadrados-mas-de_{}".format(search.min_size))
+    if search.max_size:
+      slugs.append("metros-cuadrados-menos-de_{}".format(search.max_size))
+    if len(slugs) == 0:
+      return location
+    else:
+      return location + "con-" + (",".join(slugs)) + "/"
 
   def parse(self, response):
     logger.info("Starting to parse responses [{}]".format(response))

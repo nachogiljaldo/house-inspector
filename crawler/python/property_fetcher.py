@@ -8,14 +8,14 @@ class PropertyFetcher:
     pass
 
 class Search(object):
-  name = ""
+  name = None
   transfer_type = Transfer.PURCHASE
-  min_price = 0
-  max_price = 10000000000
-  min_size = 0
-  max_size = 9999999
+  min_price = None
+  max_price = None
+  min_size = None
+  max_size = None
 
-  def __init__(self, name, transfer_type = Transfer.PURCHASE, min_price = 0, max_price = 10000000000, min_size = 0, max_size = 9999999):
+  def __init__(self, name, transfer_type = Transfer.PURCHASE, min_price = None, max_price = None, min_size = None, max_size = None):
     self.name = name
     self.min_price = min_price
     self.max_price = max_price
