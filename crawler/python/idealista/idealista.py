@@ -74,6 +74,7 @@ class IdealistaSpider(scrapy.Spider):
       info = '{}/section/*/div[contains(@class, "info-data")]'.format(self.base_query)
       price = response.xpath('{}/span[1]/span/text()'.format(info)).extract_first()
       comments = response.xpath('//*[@id="main-multimedia"]//*/div[contains(@class, "comment")]/div/text()').extract()
+      # FIXME: calculate real values
       year = None
       energy_efficiency = None
       community_expenses = None
@@ -83,8 +84,10 @@ class IdealistaSpider(scrapy.Spider):
       tags = None
       contact_info = None
       geo_information = self.get_geo_information(response)
+      url = response.url
       property = Property(provider_id, self.provider_name, title, size, price, room_number, baths, floor, state, elevator,
-                          community_expenses, tags, comments, year, energy_efficiency, Transfer.PURCHASE, geo_information, contact_info)
+                          community_expenses, tags, comments, year, energy_efficiency, Transfer.PURCHASE, geo_information,
+                          contact_info, url)
       return dict(property=property)
     except Exception, err:
       print 'print_exc():'
@@ -104,6 +107,7 @@ class IdealistaSpider(scrapy.Spider):
     location = Coordinate(parsed["latitude"], parsed["longitude"])
     exact_location = geo_location.find("markerType:null") < 0
 
+    # FIXME: remove hardcoded
     return GeoInformation(exact_location, location, "Madrid", district)
 
   def clean_url(self, string_to_clean):

@@ -2,6 +2,7 @@ from datetime import datetime
 from enum import Enum
 import json
 from json_helper import *
+from utils import *
 
 class Transfer(Enum):
   RENT="rent"
@@ -9,46 +10,60 @@ class Transfer(Enum):
 
 # This class reflects a real state property such as a house or apartment
 class Property(JsonObject):
-  id = ""
-  title = ""
-  provider_id = []
-  size = -1
-  price = -1
-  rooms = -1
-  baths = -1
-  floor = -1
-  state = ""
-  elevator = False
+  id = None
+  title = None
+  provider_id = None
+  size = None
+  price = None
+  rooms = None
+  baths = None
+  floor = None
+  floor_full = None
+  state = None
+  elevator = None
   community_expenses = None
   tags = []
-  comment = ""
+  comment = None
   year = None
   energy_efficiency = None
-  transfer_type = Transfer.PURCHASE.value
-  location = None
+  transfer_type = None
   contact_info = None
+  url = None
+  coordinates = None
+  exact_location = None
+  district = None
   last_modified = datetime.now()
 
   def __init__(self, id, provider_id, title, size, price, rooms, baths, floor, state, elevator,
-               community_expenses, tags, comment, year, energy_efficiency, transfer_type, location, contact_info):
+               community_expenses, tags, comment, year, energy_efficiency, transfer_type, location, contact_info,
+               url):
     self.id = id
     self.provider_id = provider_id
     self.title = title
-    self.size = size
-    self.price = price
-    self.rooms = rooms
-    self.baths = baths
-    self.floor = floor
+    self.size = int_or_none(size)
+    if price:
+      self.price = float_or_none(cleanup_number(price))
+    self.rooms = int_or_none(rooms)
+    self.baths = int_or_none(baths)
+    if floor:
+      self.floor = int_or_none(only_digits(floor))
+      self.floor_full = floor
+    if location:
+      self.coordinates = location.coordinates
+      self.exact_location = location.exact_location
+      self.city = location.city
+      self.district = location.district
+
     self.state = state
     self.elevator = elevator
-    self.community_expenses = community_expenses
+    self.community_expenses = float_or_none(community_expenses)
     self.tags = tags
     self.comment = comment
-    self.year = year
+    self.year = int_or_none(year)
     self.energy_efficiency = energy_efficiency
     self.transfer_type = transfer_type.value
-    self.location = location
     self.contact_info = contact_info
+    self.url = url
 
 class GeoInformation(JsonObject):
   exact_location = False
@@ -63,12 +78,12 @@ class GeoInformation(JsonObject):
     self.district = district
 
 class Coordinate(JsonObject):
-  latitude = None
-  longitude = None
+  lat = None
+  lon = None
 
   def __init__(self, latitude, longitude):
-    self.latitude = float(latitude)
-    self.longitude = float(longitude)
+    self.lat = float(latitude)
+    self.lon = float(longitude)
 
   @staticmethod
   def parse(coordinates, separator=','):
