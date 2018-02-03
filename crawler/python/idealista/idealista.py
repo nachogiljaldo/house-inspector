@@ -39,25 +39,48 @@ class IdealistaSpider(scrapy.Spider):
   name = provider_name
   base_query = '//*[@id="main"]//*'
   main_info = '{}/div[contains(@class, "main-info__title")]'.format(base_query)
-  url = None
-  params = None
-  base_url = 'https://www.idealista.com/venta-viviendas/'
-  pagination_pattern = 'pagina-{}.htm'
+  base_url = 'https://www.idealista.com/{}venta-viviendas/'
+  pagination_pattern = 'pagina-{}{}'
+  search = None
 
   def start_requests(self):
+    self.search = self.settings['SEARCH']
     # URL with filters: https://www.idealista.com/venta-viviendas/madrid-madrid/con-precio-hasta_300000,metros-cuadrados-mas-de_100,de-tres-dormitorios,de-cuatro-cinco-habitaciones-o-mas,dos-banos,tres-banos-o-mas/
-    self.params = self.search_params()
-    first_page = self.pagination_pattern.format(1)
-    url = '{}{}{}'.format(self.base_url, self.params, first_page)
+    url = self.build_url(1)
+    print(url)
     urls = [
       url
     ]
     for url in urls:
       yield scrapy.Request(url=url, callback=self.parse)
 
+  def pagination_slug(self, page):
+    if self.search.name:
+      return self.pagination_pattern.format(page, '.htm')
+    else:
+      return self.pagination_pattern.format(page, '')
+
+  def build_url(self, page_count):
+    page = self.pagination_slug(page_count)
+    if self.search.shape:
+      first_part = self.base_url.format('areas/')
+    else:
+      first_part = self.base_url.format('/')
+    params = self.search_params()
+    query_string = self.build_query_string(self.search)
+    url_to_use = '{}{}{}{}'.format(first_part, params, page, query_string)
+    print(url_to_use)
+    return url_to_use
+
+  def build_query_string(self, search):
+    return "?shape={}".format(search.shape)
+
   def search_params(self):
-    search = self.settings['SEARCH']
-    location = search.name + "/"
+    search = self.search
+    if search.name:
+      prefix = search.name + "/"
+    else:
+      prefix = ""
     slugs = []
     if search.max_price:
       slugs.append("precio-hasta_{}".format(search.max_price))
@@ -68,12 +91,13 @@ class IdealistaSpider(scrapy.Spider):
     if search.max_size:
       slugs.append("metros-cuadrados-menos-de_{}".format(search.max_size))
     if len(slugs) == 0:
-      return location
+      return prefix
     else:
-      return location + "con-" + (",".join(slugs)) + "/"
+      return prefix + "con-" + (",".join(slugs)) + "/"
 
   def parse(self, response):
-    next_page = self.find_next_page(response)
+    #next_page = self.find_next_page(response)
+    next_page = None
     if next_page:
       yield scrapy.Request(next_page)
     logger.info("Starting to parse responses [{}]".format(response))
@@ -93,9 +117,9 @@ class IdealistaSpider(scrapy.Spider):
 
   def find_next_page(self, response):
     current_page = int(response.xpath('//*[@id="main-content"]/*//div[contains(@class, "pagination")]/*//li[contains(@class, "selected")]/span/text()').extract_first())
-    url = '{}{}{}'.format(self.base_url, self.params, self.pagination_pattern.format(current_page + 1))
+    url = self.build_url(current_page + 1)
     # if the current page contains pagina- and is the same indicated in the footer, we go on
-    if "pagina-" not in response.url or self.pagination_pattern.format(current_page) in response.url:
+    if "pagina-" not in response.url or self.pagination_slug(current_page).format(current_page) in response.url:
       return url
     else:
       return None
