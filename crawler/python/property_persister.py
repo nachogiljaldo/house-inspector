@@ -42,6 +42,9 @@ class PropertyPersister(object):
             "price": {
               "type": "double"
             },
+            "price_per_size_unit": {
+              "type": "double"
+            },
             "rooms": {
               "type": "integer"
             },

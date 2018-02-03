@@ -92,13 +92,10 @@ class IdealistaSpider(scrapy.Spider):
         logger.warn("Error parsing response", err)
 
   def find_next_page(self, response):
-    print("--------------------------------------")
     current_page = int(response.xpath('//*[@id="main-content"]/*//div[contains(@class, "pagination")]/*//li[contains(@class, "selected")]/span/text()').extract_first())
     url = '{}{}{}'.format(self.base_url, self.params, self.pagination_pattern.format(current_page + 1))
     # if the current page contains pagina- and is the same indicated in the footer, we go on
-    print("will check that 'pagina-' not in [{}] or [{}] in [{}]".format(response.url, self.pagination_pattern.format(current_page), response.url))
     if "pagina-" not in response.url or self.pagination_pattern.format(current_page) in response.url:
-      print("will visit {}".format(url))
       return url
     else:
       return None

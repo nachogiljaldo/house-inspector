@@ -11,12 +11,18 @@ def cleanup_number(number_to_cleanup):
 
 def int_or_none(value_to_parse):
   if value_to_parse:
-    return int(value_to_parse)
+    try:
+      return int(value_to_parse)
+    except ValueError:
+      return None
   else:
-    None
+    return None
 
 def float_or_none(value_to_parse):
   if value_to_parse:
-    return float(value_to_parse)
+    try:
+      return float(value_to_parse)
+    except ValueError:
+      return None
   else:
-    None
+    return None

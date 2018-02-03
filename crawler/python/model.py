@@ -33,6 +33,7 @@ class Property(JsonObject):
   exact_location = None
   district = None
   last_modified = datetime.now()
+  price_per_size_unit = None
 
   def __init__(self, id, provider_id, title, size, price, rooms, baths, floor, state, elevator,
                community_expenses, tags, comment, year, energy_efficiency, transfer_type, location, contact_info,
@@ -43,6 +44,7 @@ class Property(JsonObject):
     self.size = int_or_none(size)
     if price:
       self.price = float_or_none(cleanup_number(price))
+    self.price_per_size_unit = self.price / self.size
     self.rooms = int_or_none(rooms)
     self.baths = int_or_none(baths)
     if floor:
