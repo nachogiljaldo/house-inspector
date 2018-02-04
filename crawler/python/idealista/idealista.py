@@ -101,8 +101,8 @@ class IdealistaSpider(scrapy.Spider):
       return prefix + "con-" + (",".join(slugs)) + "/"
 
   def parse(self, response):
-    #next_page = self.find_next_page(response)
-    next_page = None
+    next_page = self.find_next_page(response)
+    #next_page = None
     if next_page:
       yield scrapy.Request(next_page)
     logger.info("Starting to parse responses [{}]".format(response))
@@ -136,7 +136,7 @@ class IdealistaSpider(scrapy.Spider):
       features = '{}/div[contains(@class, "info-features")]'.format(self.base_query)
       size = response.xpath('{}/span[1]/span/text()'.format(features)).extract_first()
       room_number= response.xpath('{}/span[2]/span/text()'.format(features)).extract_first()
-      floor = response.xpath('{}/span[3]/span/text()'.format(features)).extract_first()
+      floor = self.get_floor(features, response)
       info = '{}/section/*/div[contains(@class, "info-data")]'.format(self.base_query)
       price = response.xpath('{}/span[1]/span/text()'.format(info)).extract_first()
       comments = response.xpath('//*[@id="main-multimedia"]//*/div[contains(@class, "comment")]/div/text()').extract()
@@ -155,7 +155,6 @@ class IdealistaSpider(scrapy.Spider):
       community_expenses = "unknown"
       for property_feature in property_features:
         clean_feature = self.clean_url(property_feature)
-        print("property is [{}]".format(clean_feature))
         elevator = self.get_elevator(clean_feature, elevator)
         baths = self.get_baths(clean_feature, baths)
         year = self.get_year(clean_feature, year)
@@ -173,6 +172,19 @@ class IdealistaSpider(scrapy.Spider):
       print 'print_exc(1):'
       traceback.print_exc(limit=1, file=sys.stdout)
       logger.warn("Error parsing response", err)
+
+  def get_floor(self, features, response):
+    floor_value = response.xpath('{}/span[3]/span/text()'.format(features)).extract_first()
+    if floor_value:
+      lower_case = floor_value.lower()
+      if "bajo" in floor_value.lower():
+        return 0
+      elif "sótano" in lower_case:
+        return -1
+      else:
+        return lower_case
+    else:
+      return "-"
 
   def get_elevator(self, to_analyse, current_value):
     if 'ascensor' in to_analyse:
