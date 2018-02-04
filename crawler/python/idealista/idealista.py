@@ -1,3 +1,4 @@
+# coding=utf-8
 import logging
 from model import *
 from property_fetcher import *
@@ -100,8 +101,8 @@ class IdealistaSpider(scrapy.Spider):
       return prefix + "con-" + (",".join(slugs)) + "/"
 
   def parse(self, response):
-    next_page = self.find_next_page(response)
-    #next_page = None
+    #next_page = self.find_next_page(response)
+    next_page = None
     if next_page:
       yield scrapy.Request(next_page)
     logger.info("Starting to parse responses [{}]".format(response))
@@ -139,17 +140,28 @@ class IdealistaSpider(scrapy.Spider):
       info = '{}/section/*/div[contains(@class, "info-data")]'.format(self.base_query)
       price = response.xpath('{}/span[1]/span/text()'.format(info)).extract_first()
       comments = response.xpath('//*[@id="main-multimedia"]//*/div[contains(@class, "comment")]/div/text()').extract()
-      # FIXME: calculate real values
-      year = None
-      energy_efficiency = None
-      community_expenses = None
-      baths = None
-      state = None
-      elevator = None
-      tags = None
-      contact_info = None
       geo_information = self.get_geo_information(response)
       url = response.url
+      # FIXME: calculate real values
+      tags = None
+      contact_info = None
+      property_features_query = '{}/div[contains(@class, "details-property_features")]/ul/li/text()'.format(self.base_query)
+      property_features = response.xpath(property_features_query).extract()
+      energy_efficiency = None
+      elevator = None
+      baths = None
+      year = None
+      state = "unknown"
+      community_expenses = "unknown"
+      for property_feature in property_features:
+        clean_feature = self.clean_url(property_feature)
+        print("property is [{}]".format(clean_feature))
+        elevator = self.get_elevator(clean_feature, elevator)
+        baths = self.get_baths(clean_feature, baths)
+        year = self.get_year(clean_feature, year)
+        state = self.get_state(clean_feature, state)
+        energy_efficiency = self.get_energy_efficiency(clean_feature, energy_efficiency)
+        
       property = Property(provider_id, self.provider_name, title, size, price, room_number, baths, floor, state, elevator,
                           community_expenses, tags, comments, year, energy_efficiency, Transfer.PURCHASE, geo_information,
                           contact_info, url)
@@ -161,6 +173,40 @@ class IdealistaSpider(scrapy.Spider):
       print 'print_exc(1):'
       traceback.print_exc(limit=1, file=sys.stdout)
       logger.warn("Error parsing response", err)
+
+  def get_elevator(self, to_analyse, current_value):
+    if 'ascensor' in to_analyse:
+      return 'con ' in to_analyse
+    else:
+      return current_value
+
+  def get_energy_efficiency(self, to_analyse, current_value):
+    literal = 'Certificación energética:'
+    if literal in to_analyse:
+      return to_analyse.replace(literal, "")
+    else:
+      return current_value
+
+  def get_baths(self, to_analyse, current_value):
+    if 'baño' in to_analyse:
+      return int(cleanup_number(to_analyse))
+    else:
+      return current_value
+
+  def get_year(self, to_analyse, current_value):
+    if 'Construido en' in to_analyse:
+      return int(cleanup_number(to_analyse))
+    else:
+      return current_value
+
+  def get_state(self, to_analyse, current_value):
+    if 'Segunda mano/' in to_analyse:
+      if 'reforma' in to_analyse.lower():
+        return 'renovate'
+      else:
+        return 'good'
+    else:
+      return current_value
 
   def get_geo_information(self, response):
     district = response.xpath('{}//span[contains(@class, "main-info__title-minor")]/text()'.format(self.main_info)).extract_first()
