@@ -27,6 +27,8 @@ services:
     environment:
       SERVER_NAME: kibana.home-inspector
       ELASTICSEARCH_URL: http://home-inspector.elasticsearch:9200
+      TILEMAP_OPTIONS_MAXZOOM: 18
+      TILEMAP_URL: http://a.tile.openstreetmap.org/{z}/{x}/{y}.png
     ports:
       - 5601:5601
   crawler:
