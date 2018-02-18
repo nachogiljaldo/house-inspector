@@ -123,8 +123,9 @@ class PropertyPersister(object):
       }
     }, create=False)
     self.logger.info("Created template [{}]".format(result))
-    result = client.indices.create(index=self.index_name)
-    self.logger.info("Created index [{}]".format(result))
+    if not client.indices.exists(index=self.index_name):
+      result = client.indices.create(index=self.index_name)
+      self.logger.info("Created index [{}]".format(result))
     result = client.indices.put_alias(index="{}-*".format(self.index_pattern), name=self.index_pattern)
     self.logger.info("Created alias [{}]".format(result))
 
