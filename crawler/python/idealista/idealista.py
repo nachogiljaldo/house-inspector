@@ -176,7 +176,7 @@ class IdealistaSpider(scrapy.Spider):
   def get_floor(self, features, response):
     floor_value = response.xpath('{}/span[3]/span/text()'.format(features)).extract_first()
     if floor_value:
-      lower_case = floor_value.lower()
+      lower_case = floor_value.encode('utf-8').lower()
       if "bajo" in floor_value.lower():
         return 0
       elif "sótano" in lower_case:
