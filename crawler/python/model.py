@@ -32,7 +32,6 @@ class Property(JsonObject):
   coordinates = None
   exact_location = None
   district = None
-  last_modified = datetime.now()
   price_per_size_unit = None
 
   def __init__(self, id, provider_id, title, size, price, rooms, baths, floor, state, elevator,
@@ -66,6 +65,7 @@ class Property(JsonObject):
     self.transfer_type = transfer_type.value
     self.contact_info = contact_info
     self.url = url
+    self.last_modified = datetime.utcnow().isoformat()
 
 class GeoInformation(JsonObject):
   exact_location = False

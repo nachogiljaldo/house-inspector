@@ -1,4 +1,5 @@
 from elasticsearch import Elasticsearch
+import datetime
 import logging.config
 import sys
 import traceback
@@ -6,12 +7,14 @@ import traceback
 class PropertyPersister(object):
   logger = logging.getLogger("property_persister")
   url = None
+  index_pattern = None
   index_name = None
   type_name = None
 
-  def __init__(self, url, index_name="properties", type_name="property"):
+  def __init__(self, url, index_pattern="properties", type_name="property"):
     self.url = url
-    self.index_name = index_name
+    self.index_pattern = index_pattern
+    self.index_name = "{}-{}".format(index_pattern, datetime.datetime.today().strftime('%Y-%m-%d'))
     self.type_name = type_name
 
   def es_client(self):
@@ -19,13 +22,13 @@ class PropertyPersister(object):
 
   def ensure_ready(self):
     client = self.es_client()
-    result = client.indices.put_template(name="properties-template", body={
-      "index_patterns": ["properties*"],
+    result = client.indices.put_template(name="{}-template".format(self.index_pattern), body={
+      "index_patterns": ["{}-*".format(self.index_pattern)],
       "settings": {
         "number_of_shards": 5
       },
       "mappings": {
-        "property": {
+        self.type_name: {
           "_source": {
             "enabled": True
           },
@@ -113,18 +116,17 @@ class PropertyPersister(object):
               }
             },
             "last_modified": {
-              "type": "date",
-              "format": "EEE MMM dd HH:mm:ss Z YYYY"
-            },
-            "created_at": {
-              "type": "date",
-              "format": "EEE MMM dd HH:mm:ss Z YYYY"
+              "type": "date"
             }
           }
         }
       }
     }, create=False)
     self.logger.info("Created template [{}]".format(result))
+    result = client.indices.create(index=self.index_name)
+    self.logger.info("Created index [{}]".format(result))
+    result = client.indices.put_alias(index="{}-*".format(self.index_pattern), name=self.index_pattern)
+    self.logger.info("Created alias [{}]".format(result))
 
   def persist(self, property_dict):
     try:
