@@ -113,7 +113,7 @@ class IdealistaSpider(scrapy.Spider):
         url = urljoin(response.url, link)
         yield scrapy.Request(url, callback=self.parse_property)
       except Exception, err:
-        print 'print_exc():'
+        print 'print_exc() for {}:'.format(response.url)
         traceback.print_exc(file=sys.stdout)
         print
         print 'print_exc(1):'
@@ -166,7 +166,7 @@ class IdealistaSpider(scrapy.Spider):
                           contact_info, url)
       return dict(property=property)
     except Exception, err:
-      print 'print_exc():'
+      print 'print_exc() {}:'.format(response.url)
       traceback.print_exc(file=sys.stdout)
       print
       print 'print_exc(1):'
